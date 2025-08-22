@@ -1,103 +1,140 @@
-import Image from "next/image";
+// src/app/page.tsx
+// Server component: query MongoDB directly (no fetch), render hero + two grids.
 
-export default function Home() {
+import Link from "next/link";
+import { connectDB } from "@/lib/mongodb";
+import Product from "@/models/Product";
+
+// Format price from either pricePence (int) or priceGBP (number) for older data
+function formatGBP(p: any) {
+  if (typeof p.pricePence === "number") {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
+      p.pricePence / 100
+    );
+  }
+  if (typeof p.priceGBP === "number") {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
+      p.priceGBP
+    );
+  }
+  return "£0.00";
+}
+
+async function getProducts() {
+  try {
+    await connectDB();
+    // Pull recent products; flags drive sections; fallback to recent if flags missing
+    const products = await Product.find().sort({ createdAt: -1 }).limit(40).lean();
+    return products.map((p: any) => ({
+      _id: String(p._id),
+      slug: p.slug,
+      name: p.name,
+      images: p.images || [],
+      pricePence: p.pricePence,
+      priceGBP: p.priceGBP,
+      isNewArrival: !!p.isNewArrival,
+      isBestSeller: !!p.isBestSeller,
+    }));
+  } catch {
+    // If DB isn’t wired yet, just show empty sections gracefully
+    return [];
+  }
+}
+
+export default async function Home() {
+  const products = await getProducts();
+
+  // Prefer flags; fallback to slices if flags aren’t set
+  const newArrivals =
+    products.filter((p) => p.isNewArrival).slice(0, 8).length > 0
+      ? products.filter((p) => p.isNewArrival).slice(0, 8)
+      : products.slice(0, 8);
+
+  const bestSellers =
+    products.filter((p) => p.isBestSeller).slice(0, 8).length > 0
+      ? products.filter((p) => p.isBestSeller).slice(0, 8)
+      : products.slice(2, 10);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="p-0">
+      {/* Hero */}
+      <section className="relative w-full">
+        <div className="relative overflow-hidden">
+          <div className="h-[260px] md:h-[380px] bg-gradient-to-b from-gray-900 to-gray-950 flex items-center">
+            <div className="max-w-7xl mx-auto px-6">
+              <h1 className="text-3xl md:text-5xl font-bold text-white">
+                Authentic Afro-Caribbean Groceries
+              </h1>
+              <p className="mt-3 md:mt-4 text-gray-300 max-w-xl">
+                Fresh, trusted, and delivered across the UK. Stock up your kitchen with the
+                flavors you love.
+              </p>
+              <Link href="/products" className="btn btn-primary mt-6">
+                Shop All Products
+              </Link>
+            </div>
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1000px_400px_at_0%_0%,rgba(47,143,78,0.12),transparent)]" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* New Arrivals */}
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white">New Arrivals</h2>
+          <Link href="/products" className="hover:underline">
+            View all
+          </Link>
+        </div>
+        {newArrivals.length === 0 ? (
+          <p className="text-gray-400">No products yet. Add some in /admin.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {newArrivals.map((p) => {
+              const img = p.images?.[0] || "/placeholder.png";
+              return (
+                <Link key={p.slug ?? p._id} href={`/products/${p.slug}`} className="card overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt={p.name} className="w-full h-48 object-cover" />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-brandGreen">{p.name}</h3>
+                    <p className="mt-2 font-bold text-white">{formatGBP(p)}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Best Sellers */}
+      <section className="max-w-7xl mx-auto px-6 pb-12">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white">Best Sellers</h2>
+          <Link href="/products" className="hover:underline">
+            View all
+          </Link>
+        </div>
+        {bestSellers.length === 0 ? (
+          <p className="text-gray-400">No products yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {bestSellers.map((p) => {
+              const img = p.images?.[0] || "/placeholder.png";
+              return (
+                <Link key={p.slug ?? p._id} href={`/products/${p.slug}`} className="card overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt={p.name} className="w-full h-48 object-cover" />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-brandGreen">{p.name}</h3>
+                    <p className="mt-2 font-bold text-white">{formatGBP(p)}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

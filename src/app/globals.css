@@ -1,26 +1,126 @@
-@import "tailwindcss";
+/* ==== Tailwind base ==== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==== Base (dark theme) ==== */
+html,
+body {
+  @apply bg-gray-950 text-gray-100 antialiased;
+  font-family: 'Roboto', ui-sans-serif, system-ui, -apple-system, Segoe UI,
+    Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Selection highlight */
+::selection {
+  background: rgba(47, 143, 78, 0.35); /* brandGreen glow */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Links default to brandGreen with subtle hover */
+a {
+  @apply text-brandGreen transition-colors;
+}
+a:hover {
+  @apply text-white;
+}
+
+/* Images never overflow */
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==== Typography tweaks ==== */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-white font-bold;
+}
+p {
+  @apply text-gray-300 leading-relaxed;
+}
+
+/* ==== Forms (dark) ==== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  @apply w-full bg-gray-900 text-gray-100 placeholder-gray-500
+    border border-gray-800 rounded-lg px-3 py-2 outline-none
+    focus:border-brandGreen focus:ring-1 focus:ring-brandGreen;
+}
+
+/* ==== Reusable components via @layer ==== */
+@layer components {
+  /* Card container */
+  .card {
+    @apply bg-gray-900 rounded-xl shadow border border-gray-800 hover:shadow-lg transition;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5
+      font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2
+      focus:ring-offset-gray-950;
+  }
+  .btn-primary {
+    @apply btn bg-brandGreen text-white hover:brightness-110 focus:ring-brandGreen;
+  }
+  .btn-ghost {
+    @apply btn bg-gray-900 text-gray-100 border border-gray-800 hover:bg-gray-800 focus:ring-gray-700;
+  }
+  .btn-outline {
+    @apply btn border border-brandGreen text-brandGreen hover:bg-brandGreen hover:text-white;
+  }
+
+  /* Pills / chips */
+  .chip {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 border border-gray-800 text-gray-200;
+  }
+
+  /* Section wrapper (max width layout) */
+  .container-page {
+    @apply max-w-7xl mx-auto px-6;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ==== Utilities ==== */
+@layer utilities {
+  .text-muted { @apply text-gray-400; }
+  .divider { @apply h-px w-full bg-gray-900 border-0; }
+}
+
+/* ==== Scrollbar (nice on dark) ==== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2F8F4E #0b0f12; /* brandGreen on dark bg */
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: #0b0f12;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #2F8F4E;
+  border-radius: 8px;
+}
+
+/* ==== Tables (admin lists) ==== */
+table {
+  @apply w-full border-collapse;
+}
+thead th {
+  @apply text-left text-gray-300 font-semibold border-b border-gray-800 pb-2;
+}
+tbody td {
+  @apply border-b border-gray-900 py-2 text-gray-200;
+}
+
+/* ==== Toast placeholder (if you add later) ==== */
+.toast {
+  @apply fixed bottom-4 right-4 bg-gray-900 text-white border border-gray-800 rounded-lg px-4 py-2 shadow;
 }
