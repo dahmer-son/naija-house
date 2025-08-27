@@ -2,6 +2,8 @@ export type Category = {
   _id?: string;
   name: string;
   slug: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Product = {
@@ -10,7 +12,6 @@ export type Product = {
   name: string;
   description?: string;
   images: string[];
-  // Prefer pence; keep GBP for legacy data while migrating
   pricePence?: number;
   priceGBP?: number;
   category?: string | Category;
